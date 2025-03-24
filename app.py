@@ -70,7 +70,7 @@ if search_town:
 
         st_folium(m, width=700, height=500)
 
-       import os
+    import os
 
 IS_CLOUD = os.environ.get("HOME", "") == "/home/adminuser"
 
