@@ -110,5 +110,4 @@ else:
         download_df.to_csv(csv_buffer, index=False)
         csv_data = csv_buffer.getvalue().encode('utf-8')
         st.download_button('📥 範囲内住所データをCSVでダウンロード', csv_data, '範囲内住所データ.csv', 'text/csv')
-else:
     st.warning('町名を入力して検索してください（部分的でもOK）')
