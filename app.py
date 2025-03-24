@@ -103,10 +103,19 @@ if search_town:
             with open(screenshot_file, 'rb') as f:
                 st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
 
-        # CSVダウンロード
+        # ✅ CSVダウンロード（町名入りファイル名）
         csv_buffer = io.StringIO()
         download_df.to_csv(csv_buffer, index=False)
         csv_data = csv_buffer.getvalue().encode('utf-8')
-        st.download_button('📥 範囲内住所データをCSVでダウンロード', csv_data, '範囲内住所データ.csv', 'text/csv')
+
+        file_name = f"範囲内住所データ_{selected_town}.csv"
+
+        st.download_button(
+            '📥 範囲内住所データをCSVでダウンロード',
+            csv_data,
+            file_name,
+            'text/csv'
+        )
+
 else:
     st.warning('町名を入力して検索してください（部分的でもOK）')
