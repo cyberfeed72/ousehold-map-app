@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_e1fe7729c6fffe525bfaf1016394b346 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+        
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_div {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_e1fe7729c6fffe525bfaf1016394b346" ></div>
+        
+    
+            <div class="folium-map" id="map_div" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_e1fe7729c6fffe525bfaf1016394b346 = L.map(
+                "map_e1fe7729c6fffe525bfaf1016394b346",
+                {
+                    center: [34.8555358, 134.677436],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 14,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_a7a28eaa75a4e3f008a7affd56defd71 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_a7a28eaa75a4e3f008a7affd56defd71.addTo(map_e1fe7729c6fffe525bfaf1016394b346);
+        
+    
+            var circle_859d1968e19dcf9cfcb3be35743e6c52 = L.circle(
+                [34.8555358, 134.677436],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 500.0, "stroke": true, "weight": 3}
+            ).addTo(map_e1fe7729c6fffe525bfaf1016394b346);
+        
+    
+            var marker_3f8c568ebe39e960ae3d7bc5865c2623 = L.marker(
+                [34.8555358, 134.677436],
+                {
+}
+            ).addTo(map_e1fe7729c6fffe525bfaf1016394b346);
+        
+    
+            var icon_855135c8f333306d061c0f99d5fca08f = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_6b9a1d4cd35cac1ad3f6d0e63798ddbd = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7c413a8642521f61fdb86a7a6d3d249a = $(`<div id="html_7c413a8642521f61fdb86a7a6d3d249a" style="width: 100.0%; height: 100.0%;">兵庫県姫路市田寺山手町:121世帯</div>`)[0];
+                popup_6b9a1d4cd35cac1ad3f6d0e63798ddbd.setContent(html_7c413a8642521f61fdb86a7a6d3d249a);
+            
+        
+
+        marker_3f8c568ebe39e960ae3d7bc5865c2623.bindPopup(popup_6b9a1d4cd35cac1ad3f6d0e63798ddbd)
+        ;
+
+        
+    
+    
+                marker_3f8c568ebe39e960ae3d7bc5865c2623.setIcon(icon_855135c8f333306d061c0f99d5fca08f);
+            
+    
+            var marker_da12dc5bffd31c2726037bacda4183ac = L.marker(
+                [34.8529074, 134.6777295],
+                {
+}
+            ).addTo(map_e1fe7729c6fffe525bfaf1016394b346);
+        
+    
+            var icon_a82c1264150325c4ad047c8a6748120a = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_371aec04d8c784d1e8a793b0979d9205 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_e415055c625529962db93a68a4cc1640 = $(`<div id="html_e415055c625529962db93a68a4cc1640" style="width: 100.0%; height: 100.0%;">兵庫県姫路市辻井８丁目:275世帯</div>`)[0];
+                popup_371aec04d8c784d1e8a793b0979d9205.setContent(html_e415055c625529962db93a68a4cc1640);
+            
+        
+
+        marker_da12dc5bffd31c2726037bacda4183ac.bindPopup(popup_371aec04d8c784d1e8a793b0979d9205)
+        ;
+
+        
+    
+    
+                marker_da12dc5bffd31c2726037bacda4183ac.setIcon(icon_a82c1264150325c4ad047c8a6748120a);
+            
+    
+            var marker_51466192cd0ca9688f0d4a26c2ba99b7 = L.marker(
+                [34.856531, 134.680664],
+                {
+}
+            ).addTo(map_e1fe7729c6fffe525bfaf1016394b346);
+        
+    
+            var icon_2cf9de4dce6c47ce623e814b17ab7f38 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_13804eba2294673cc3b9c2811bedfac4 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_155731f3022cc3237142e5ddcdc4de72 = $(`<div id="html_155731f3022cc3237142e5ddcdc4de72" style="width: 100.0%; height: 100.0%;">兵庫県姫路市田寺東１丁目:230世帯</div>`)[0];
+                popup_13804eba2294673cc3b9c2811bedfac4.setContent(html_155731f3022cc3237142e5ddcdc4de72);
+            
+        
+
+        marker_51466192cd0ca9688f0d4a26c2ba99b7.bindPopup(popup_13804eba2294673cc3b9c2811bedfac4)
+        ;
+
+        
+    
+    
+                marker_51466192cd0ca9688f0d4a26c2ba99b7.setIcon(icon_2cf9de4dce6c47ce623e814b17ab7f38);
+            
+    
+            var marker_ebaa5961faf1cdd779473c7d77c2dbac = L.marker(
+                [34.8567558, 134.6742078],
+                {
+}
+            ).addTo(map_e1fe7729c6fffe525bfaf1016394b346);
+        
+    
+            var icon_9c0dc9c6b143b36fa47f92362c7dd65a = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_e640926f31c64197077be4e47f1eab65 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7b7f1467162f528557efc960e1ba337e = $(`<div id="html_7b7f1467162f528557efc960e1ba337e" style="width: 100.0%; height: 100.0%;">兵庫県姫路市田寺東２丁目:681世帯</div>`)[0];
+                popup_e640926f31c64197077be4e47f1eab65.setContent(html_7b7f1467162f528557efc960e1ba337e);
+            
+        
+
+        marker_ebaa5961faf1cdd779473c7d77c2dbac.bindPopup(popup_e640926f31c64197077be4e47f1eab65)
+        ;
+
+        
+    
+    
+                marker_ebaa5961faf1cdd779473c7d77c2dbac.setIcon(icon_9c0dc9c6b143b36fa47f92362c7dd65a);
+            
+    
+            tile_layer_a7a28eaa75a4e3f008a7affd56defd71.addTo(map_e1fe7729c6fffe525bfaf1016394b346);
+        
+    
+                marker_3f8c568ebe39e960ae3d7bc5865c2623.setIcon(icon_855135c8f333306d061c0f99d5fca08f);
+            
+    
+                marker_da12dc5bffd31c2726037bacda4183ac.setIcon(icon_a82c1264150325c4ad047c8a6748120a);
+            
+    
+                marker_51466192cd0ca9688f0d4a26c2ba99b7.setIcon(icon_2cf9de4dce6c47ce623e814b17ab7f38);
+            
+    
+                marker_ebaa5961faf1cdd779473c7d77c2dbac.setIcon(icon_9c0dc9c6b143b36fa47f92362c7dd65a);
+            
+    
+            var map_div = L.map(
+                "map_div",
+                {
+                    center: [34.8555358, 134.677436],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 14,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_div_0 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_a7a28eaa75a4e3f008a7affd56defd71.addTo(map_e1fe7729c6fffe525bfaf1016394b346);
+        
+    
+            tile_layer_div_0.addTo(map_div);
+        
+    
+            var circle_div_1 = L.circle(
+                [34.8555358, 134.677436],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 500.0, "stroke": true, "weight": 3}
+            ).addTo(map_div);
+        
+    
+            var marker_div_2 = L.marker(
+                [34.8555358, 134.677436],
+                {
+}
+            ).addTo(map_div);
+        
+    
+            var icon_div_2_0 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_div_2_1 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7c413a8642521f61fdb86a7a6d3d249a = $(`<div id="html_7c413a8642521f61fdb86a7a6d3d249a" style="width: 100.0%; height: 100.0%;">兵庫県姫路市田寺山手町:121世帯</div>`)[0];
+                popup_div_2_1.setContent(html_7c413a8642521f61fdb86a7a6d3d249a);
+            
+        
+
+        marker_div_2.bindPopup(popup_div_2_1)
+        ;
+
+        
+    
+    
+                marker_div_2.setIcon(icon_div_2_0);
+            
+    
+                marker_div_2.setIcon(icon_div_2_0);
+            
+    
+                marker_div_2.setIcon(icon_div_2_0);
+            
+    
+            var marker_div_3 = L.marker(
+                [34.8529074, 134.6777295],
+                {
+}
+            ).addTo(map_div);
+        
+    
+            var icon_div_3_0 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_div_3_1 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_e415055c625529962db93a68a4cc1640 = $(`<div id="html_e415055c625529962db93a68a4cc1640" style="width: 100.0%; height: 100.0%;">兵庫県姫路市辻井８丁目:275世帯</div>`)[0];
+                popup_div_3_1.setContent(html_e415055c625529962db93a68a4cc1640);
+            
+        
+
+        marker_div_3.bindPopup(popup_div_3_1)
+        ;
+
+        
+    
+    
+                marker_div_3.setIcon(icon_div_3_0);
+            
+    
+                marker_div_3.setIcon(icon_div_3_0);
+            
+    
+                marker_div_3.setIcon(icon_div_3_0);
+            
+    
+            var marker_div_4 = L.marker(
+                [34.856531, 134.680664],
+                {
+}
+            ).addTo(map_div);
+        
+    
+            var icon_div_4_0 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_div_4_1 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_155731f3022cc3237142e5ddcdc4de72 = $(`<div id="html_155731f3022cc3237142e5ddcdc4de72" style="width: 100.0%; height: 100.0%;">兵庫県姫路市田寺東１丁目:230世帯</div>`)[0];
+                popup_div_4_1.setContent(html_155731f3022cc3237142e5ddcdc4de72);
+            
+        
+
+        marker_div_4.bindPopup(popup_div_4_1)
+        ;
+
+        
+    
+    
+                marker_div_4.setIcon(icon_div_4_0);
+            
+    
+                marker_div_4.setIcon(icon_div_4_0);
+            
+    
+                marker_div_4.setIcon(icon_div_4_0);
+            
+    
+            var marker_div_5 = L.marker(
+                [34.8567558, 134.6742078],
+                {
+}
+            ).addTo(map_div);
+        
+    
+            var icon_div_5_0 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_div_5_1 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7b7f1467162f528557efc960e1ba337e = $(`<div id="html_7b7f1467162f528557efc960e1ba337e" style="width: 100.0%; height: 100.0%;">兵庫県姫路市田寺東２丁目:681世帯</div>`)[0];
+                popup_div_5_1.setContent(html_7b7f1467162f528557efc960e1ba337e);
+            
+        
+
+        marker_div_5.bindPopup(popup_div_5_1)
+        ;
+
+        
+    
+    
+                marker_div_5.setIcon(icon_div_5_0);
+            
+    
+                marker_div_5.setIcon(icon_div_5_0);
+            
+    
+                marker_div_5.setIcon(icon_div_5_0);
+            
+</script>
+</html>
