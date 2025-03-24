@@ -70,19 +70,13 @@ if search_town:
 
         st_folium(m, width=700, height=500)
 
-        import os
+       import os
 
-# Cloud or local 判定（修正バージョン）
 IS_CLOUD = os.environ.get("HOME", "") == "/home/adminuser"
-
-...
-
-# ↓↓↓ 地図画像保存部分を次のように分岐 ↓↓↓
 
 if IS_CLOUD:
     st.info("🛑 Web公開版では地図画像の自動保存機能は無効になっています。")
 else:
-    # --- 以下 Selenium 処理を実行 ---
     from selenium import webdriver
     from selenium.webdriver.chrome.service import Service
     from selenium.webdriver.chrome.options import Options
@@ -108,6 +102,7 @@ else:
 
     with open(screenshot_file, 'rb') as f:
         st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
+
 
 
         # CSV出力
