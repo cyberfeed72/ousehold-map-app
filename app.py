@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import io
@@ -8,7 +7,7 @@ from streamlit_folium import st_folium
 from geopy.distance import geodesic
 import folium
 
-# ローカル環境かStreamlit Cloudかを判定
+# Cloud or local 判定
 IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "1"
 
 # --- 初期データ読込み ---
@@ -58,56 +57,56 @@ if search_town:
         selected_row = filtered_df[filtered_df['住所（スプレッドシート用）'] == selected_town].iloc[0]
         map_center = [selected_row['Latitude'], selected_row['Longitude']]
 
+        # 地図作成
         m = folium.Map(location=map_center, zoom_start=14)
         folium.Circle(location=map_center, radius=radius_km * 1000, color='blue', fill=True, fill_opacity=0.1).add_to(m)
 
+        # 範囲内マーカー追加
         download_df = pd.DataFrame(columns=st.session_state.df.columns)
         for idx, row in st.session_state.df.iterrows():
             distance = geodesic((selected_row['Latitude'], selected_row['Longitude']), (row['Latitude'], row['Longitude'])).km
             if distance <= radius_km:
-                folium.Marker([row['Latitude'], row['Longitude']], popup=f"{row['住所（スプレッドシート用）']}:{row['世帯数']}世帯", icon=folium.Icon(color='green', icon='home')).add_to(m)
+                folium.Marker([row['Latitude'], row['Longitude']],
+                              popup=f"{row['住所（スプレッドシート用）']}:{row['世帯数']}世帯",
+                              icon=folium.Icon(color='green', icon='home')).add_to(m)
                 download_df = pd.concat([download_df, row.to_frame().T], ignore_index=True)
 
         st_folium(m, width=700, height=500)
 
-    import os
+        # Web用警告 or 画像生成
+        if IS_CLOUD:
+            st.info("🛑 Web公開版では地図画像の自動保存機能は無効になっています。")
+        else:
+            from selenium import webdriver
+            from selenium.webdriver.chrome.service import Service
+            from selenium.webdriver.chrome.options import Options
+            from webdriver_manager.chrome import ChromeDriverManager
+            import time
 
-IS_CLOUD = os.environ.get("HOME", "") == "/home/adminuser"
+            map_file = os.path.abspath('temp_map.html')
+            m.save(map_file)
 
-if IS_CLOUD:
-    st.info("🛑 Web公開版では地図画像の自動保存機能は無効になっています。")
-else:
-    from selenium import webdriver
-    from selenium.webdriver.chrome.service import Service
-    from selenium.webdriver.chrome.options import Options
-    from webdriver_manager.chrome import ChromeDriverManager
-    import time
+            options = Options()
+            options.add_argument('--headless')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
 
-    map_file = os.path.abspath('temp_map.html')
-    m.save(map_file)
+            service = Service(executable_path='/usr/bin/chromedriver')
+            driver = webdriver.Chrome(service=service, options=options)
+            driver.get(f'file://{map_file}')
+            time.sleep(5)
 
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
+            screenshot_file = os.path.abspath('map_image.png')
+            driver.save_screenshot(screenshot_file)
+            driver.quit()
 
-    service = Service(executable_path='/usr/bin/chromedriver')
-    driver = webdriver.Chrome(service=service, options=options)
-    driver.get(f'file://{map_file}')
-    time.sleep(5)
+            with open(screenshot_file, 'rb') as f:
+                st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
 
-    screenshot_file = os.path.abspath('map_image.png')
-    driver.save_screenshot(screenshot_file)
-    driver.quit()
-
-    with open(screenshot_file, 'rb') as f:
-        st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
-
-
-
-        # CSV出力
+        # CSVダウンロード
         csv_buffer = io.StringIO()
         download_df.to_csv(csv_buffer, index=False)
         csv_data = csv_buffer.getvalue().encode('utf-8')
         st.download_button('📥 範囲内住所データをCSVでダウンロード', csv_data, '範囲内住所データ.csv', 'text/csv')
+else:
     st.warning('町名を入力して検索してください（部分的でもOK）')
