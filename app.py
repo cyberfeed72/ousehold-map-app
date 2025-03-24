@@ -70,32 +70,45 @@ if search_town:
 
         st_folium(m, width=700, height=500)
 
-        if IS_CLOUD:
-            st.info("画像ダウンロードはWeb公開版では無効化されています。")
-        else:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.service import Service
-            from selenium.webdriver.chrome.options import Options
-            from webdriver_manager.chrome import ChromeDriverManager
-            import time
+        import os
 
-            map_file = os.path.abspath('temp_map.html')
-            m.save(map_file)
+# Cloud or local 判定（修正バージョン）
+IS_CLOUD = os.environ.get("HOME", "") == "/home/adminuser"
 
-            options = Options()
-            options.add_argument('--headless')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            service = Service(executable_path='/usr/bin/chromedriver')
-            driver = webdriver.Chrome(service=service, options=options)
-            driver.get(f'file://{map_file}')
-            time.sleep(5)
-            screenshot_file = os.path.abspath('map_image.png')
-            driver.save_screenshot(screenshot_file)
-            driver.quit()
+...
 
-            with open(screenshot_file, 'rb') as f:
-                st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
+# ↓↓↓ 地図画像保存部分を次のように分岐 ↓↓↓
+
+if IS_CLOUD:
+    st.info("🛑 Web公開版では地図画像の自動保存機能は無効になっています。")
+else:
+    # --- 以下 Selenium 処理を実行 ---
+    from selenium import webdriver
+    from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.chrome.options import Options
+    from webdriver_manager.chrome import ChromeDriverManager
+    import time
+
+    map_file = os.path.abspath('temp_map.html')
+    m.save(map_file)
+
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+
+    service = Service(executable_path='/usr/bin/chromedriver')
+    driver = webdriver.Chrome(service=service, options=options)
+    driver.get(f'file://{map_file}')
+    time.sleep(5)
+
+    screenshot_file = os.path.abspath('map_image.png')
+    driver.save_screenshot(screenshot_file)
+    driver.quit()
+
+    with open(screenshot_file, 'rb') as f:
+        st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
+
 
         # CSV出力
         csv_buffer = io.StringIO()
