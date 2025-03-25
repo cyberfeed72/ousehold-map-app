@@ -117,3 +117,20 @@ if search_town:
         )
 else:
     st.warning('町名を入力して検索してください（部分的でもOK）')
+# ✅ 常に表示：すべての住所データをダウンロードできるボタン
+st.markdown("---")
+st.subheader("📦 すべての住所データをCSVでダウンロード")
+
+all_csv_buffer = io.StringIO()
+st.session_state.df.to_csv(all_csv_buffer, index=False)
+all_csv_data = all_csv_buffer.getvalue().encode('utf-8')
+
+st.download_button(
+    label="📥 全住所データCSVをダウンロード",
+    data=all_csv_data,
+    file_name="全住所データ.csv",
+    mime="text/csv"
+)
+import datetime
+today = datetime.date.today().strftime('%Y%m%d')
+file_name = f"全住所データ_{today}.csv"
