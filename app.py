@@ -134,3 +134,15 @@ st.download_button(
 import datetime
 today = datetime.date.today().strftime('%Y%m%d')
 file_name = f"全住所データ_{today}.csv"
+# CSVダウンロード（町名入りファイル名にする）
+csv_buffer = io.StringIO()
+download_df.to_csv(csv_buffer, index=False)
+csv_data = csv_buffer.getvalue().encode('utf-8')
+file_name = f"範囲内住所データ_{selected_town}.csv"
+
+st.download_button(
+    label='📥 範囲内住所データをCSVでダウンロード',
+    data=csv_data,
+    file_name=file_name,
+    mime='text/csv'
+)
