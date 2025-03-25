@@ -7,9 +7,10 @@ from streamlit_folium import st_folium
 from geopy.distance import geodesic
 import folium
 
+# Cloud or local 判定
 IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "1"
 
-# 初期データ読込み
+# --- 初期データ読込み ---
 if 'df' not in st.session_state:
     df1 = pd.read_csv('加古川市住所データ.csv', encoding='utf-8')
     df2 = pd.read_csv('姫路市全域住所データ - 2024331.csv', encoding='utf-8')
@@ -17,7 +18,7 @@ if 'df' not in st.session_state:
     df['世帯数'] = pd.to_numeric(df['世帯数'].astype(str).str.replace(',', '', regex=False), errors='coerce').fillna(0).astype(int)
     st.session_state.df = df
 
-# アップロード
+# --- CSV/エクセルアップロード ---
 st.sidebar.header("住所データ管理")
 uploaded_file = st.sidebar.file_uploader("CSVまたはExcelファイルをアップロードしてください", type=["csv", "xlsx"], key="file_upload")
 
@@ -36,11 +37,11 @@ if uploaded_file:
     st.session_state.df = pd.concat([st.session_state.df, new_df], ignore_index=True).drop_duplicates().reset_index(drop=True)
     st.sidebar.success('データが追加されました！')
 
-# サイドバー表示
+# --- 現在のデータ表示 ---
 with st.sidebar.expander("現在のCSVデータを確認"):
     st.dataframe(st.session_state.df)
 
-# 検索機能
+# --- 検索機能 ---
 search_town = st.text_input('町名を入力してください（部分一致でOK）:')
 
 if search_town:
@@ -56,9 +57,11 @@ if search_town:
         selected_row = filtered_df[filtered_df['住所（スプレッドシート用）'] == selected_town].iloc[0]
         map_center = [selected_row['Latitude'], selected_row['Longitude']]
 
+        # 地図作成
         m = folium.Map(location=map_center, zoom_start=14)
         folium.Circle(location=map_center, radius=radius_km * 1000, color='blue', fill=True, fill_opacity=0.1).add_to(m)
 
+        # 範囲内マーカー追加
         download_df = pd.DataFrame(columns=st.session_state.df.columns)
         for idx, row in st.session_state.df.iterrows():
             distance = geodesic((selected_row['Latitude'], selected_row['Longitude']), (row['Latitude'], row['Longitude'])).km
@@ -70,13 +73,14 @@ if search_town:
 
         st_folium(m, width=700, height=500)
 
-        # Web or ローカル分岐
+        # Web用警告 or 画像生成
         if IS_CLOUD:
             st.info("🛑 Web公開版では地図画像の自動保存機能は無効になっています。")
         else:
             from selenium import webdriver
             from selenium.webdriver.chrome.service import Service
             from selenium.webdriver.chrome.options import Options
+            from webdriver_manager.chrome import ChromeDriverManager
             import time
 
             map_file = os.path.abspath('temp_map.html')
@@ -99,11 +103,17 @@ if search_town:
             with open(screenshot_file, 'rb') as f:
                 st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
 
-        # CSV出力（町名入りファイル名）
+        # ✅ CSV出力（町名入りファイル名にする）
         csv_buffer = io.StringIO()
         download_df.to_csv(csv_buffer, index=False)
         csv_data = csv_buffer.getvalue().encode('utf-8')
         file_name = f"範囲内住所データ_{selected_town}.csv"
-        st.download_button('📥 範囲内住所データをCSVでダウンロード', csv_data, file_name, 'text/csv')
+
+        st.download_button(
+            '📥 範囲内住所データをCSVでダウンロード',
+            csv_data,
+            file_name,
+            'text/csv'
+        )
 else:
     st.warning('町名を入力して検索してください（部分的でもOK）')
