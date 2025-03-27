@@ -7,7 +7,6 @@ from streamlit_folium import st_folium
 from geopy.distance import geodesic
 import folium
 
-# Cloud or local 判定
 IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "1"
 
 # --- 初期データ読込み ---
@@ -66,21 +65,23 @@ if search_town:
         for idx, row in st.session_state.df.iterrows():
             distance = geodesic((selected_row['Latitude'], selected_row['Longitude']), (row['Latitude'], row['Longitude'])).km
             if distance <= radius_km:
-                folium.Marker([row['Latitude'], row['Longitude']],
-                              popup=f"{row['住所（スプレッドシート用）']}:{row['世帯数']}世帯",
-                              icon=folium.Icon(color='green', icon='home')).add_to(m)
+                folium.Marker(
+                    [row['Latitude'], row['Longitude']],
+                    popup=f"{row['住所（スプレッドシート用）']}:{row['世帯数']}世帯",
+                    icon=folium.Icon(color='green', icon='home')
+                ).add_to(m)
                 download_df = pd.concat([download_df, row.to_frame().T], ignore_index=True)
 
+        # 地図表示
         st_folium(m, width=700, height=500)
 
-        # Web用警告 or 画像生成
+        # Web or ローカルで画像処理分岐
         if IS_CLOUD:
             st.info("🛑 Web公開版では地図画像の自動保存機能は無効になっています。")
         else:
             from selenium import webdriver
             from selenium.webdriver.chrome.service import Service
             from selenium.webdriver.chrome.options import Options
-            from webdriver_manager.chrome import ChromeDriverManager
             import time
 
             map_file = os.path.abspath('temp_map.html')
@@ -103,46 +104,11 @@ if search_town:
             with open(screenshot_file, 'rb') as f:
                 st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
 
-        # ✅ CSV出力（町名入りファイル名にする）
+        # ✅ CSVダウンロード
         csv_buffer = io.StringIO()
         download_df.to_csv(csv_buffer, index=False)
         csv_data = csv_buffer.getvalue().encode('utf-8')
         file_name = f"範囲内住所データ_{selected_town}.csv"
-
-        st.download_button(
-            '📥 範囲内住所データをCSVでダウンロード',
-            csv_data,
-            file_name,
-            'text/csv'
-        )
+        st.download_button("📥 範囲内CSVをダウンロード", csv_data, file_name, "text/csv")
 else:
     st.warning('町名を入力して検索してください（部分的でもOK）')
-# ✅ 常に表示：すべての住所データをダウンロードできるボタン
-st.markdown("---")
-st.subheader("📦 すべての住所データをCSVでダウンロード")
-
-all_csv_buffer = io.StringIO()
-st.session_state.df.to_csv(all_csv_buffer, index=False)
-all_csv_data = all_csv_buffer.getvalue().encode('utf-8')
-
-st.download_button(
-    label="📥 全住所データCSVをダウンロード",
-    data=all_csv_data,
-    file_name="全住所データ.csv",
-    mime="text/csv"
-)
-import datetime
-today = datetime.date.today().strftime('%Y%m%d')
-file_name = f"全住所データ_{today}.csv"
-# CSVダウンロード（町名入りファイル名にする）
-csv_buffer = io.StringIO()
-download_df.to_csv(csv_buffer, index=False)
-csv_data = csv_buffer.getvalue().encode('utf-8')
-file_name = f"範囲内住所データ_{selected_town}.csv"
-
-st.download_button(
-    label='📥 範囲内住所データをCSVでダウンロード',
-    data=csv_data,
-    file_name=file_name,
-    mime='text/csv'
-)
