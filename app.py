@@ -15,11 +15,79 @@ IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "1"
 
 # --- 初期データ読込み ---
 if 'df' not in st.session_state:
-    df1 = pd.read_csv('加古川市住所データ.csv', encoding='utf-8')
-    df2 = pd.read_csv('姫路市全域住所データ - 2024331.csv', encoding='utf-8')
-    df = pd.concat([df1, df2], ignore_index=True)
+    try:
+        # 既存のデータファイル
+        df1 = pd.read_csv('加古川市住所データ.csv', encoding='utf-8')
+        df2 = pd.read_csv('姫路市全域住所データ - 2024331.csv', encoding='utf-8')
+        
+        # 新規追加する市のデータファイル
+        df3 = pd.read_csv('神戸市住所データ.csv', encoding='utf-8')
+        df4 = pd.read_csv('明石市住所データ.csv', encoding='utf-8')
+        df5 = pd.read_csv('西宮市住所データ.csv', encoding='utf-8')
+        df6 = pd.read_csv('高砂市住所データ.csv', encoding='utf-8')
+        
+        # すべてのデータフレームを結合
+        df = pd.concat([df1, df2, df3, df4, df5, df6], ignore_index=True)
+        
+    except FileNotFoundError as e:
+        st.warning(f"一部のデータファイルが見つかりません: {str(e)}")
+        # ファイルが見つからない場合は、見つかったファイルだけで続行
+        available_dfs = []
+        try:
+            df1 = pd.read_csv('加古川市住所データ.csv', encoding='utf-8')
+            available_dfs.append(df1)
+        except:
+            pass
+        try:
+            df2 = pd.read_csv('姫路市全域住所データ - 2024331.csv', encoding='utf-8')
+            available_dfs.append(df2)
+        except:
+            pass
+        try:
+            df3 = pd.read_csv('神戸市住所データ.csv', encoding='utf-8')
+            available_dfs.append(df3)
+        except:
+            pass
+        try:
+            df4 = pd.read_csv('明石市住所データ.csv', encoding='utf-8')
+            available_dfs.append(df4)
+        except:
+            pass
+        try:
+            df5 = pd.read_csv('西宮市住所データ.csv', encoding='utf-8')
+            available_dfs.append(df5)
+        except:
+            pass
+        try:
+            df6 = pd.read_csv('高砂市住所データ.csv', encoding='utf-8')
+            available_dfs.append(df6)
+        except:
+            pass
+        
+        if available_dfs:
+            df = pd.concat(available_dfs, ignore_index=True)
+        else:
+            st.error("データファイルが読み込めませんでした。")
+            df = pd.DataFrame(columns=['住所（スプレッドシート用）', '世帯数', 'Latitude', 'Longitude'])
+    
     df['世帯数'] = pd.to_numeric(df['世帯数'].astype(str).str.replace(',', '', regex=False), errors='coerce').fillna(0).astype(int)
     st.session_state.df = df
+
+# --- サイドバーに都市選択フィルター追加 ---
+st.sidebar.header("データフィルター")
+cities = ["すべての市", "加古川市", "姫路市", "神戸市", "西宮市", "高砂市", "明石市"]
+selected_city = st.sidebar.selectbox("市を選択:", cities)
+
+# 選択された市でデータをフィルタリング
+if selected_city != "すべての市":
+    filtered_city_df = st.session_state.df[st.session_state.df['住所（スプレッドシート用）'].str.contains(selected_city, na=False)]
+    # 一時的にフィルタリングされたデータを使用
+    display_df = filtered_city_df
+else:
+    display_df = st.session_state.df
+
+# 現在のフィルタリング状態を表示
+st.sidebar.info(f"現在のデータ: {selected_city if selected_city != 'すべての市' else '全地域'} ({len(display_df)} 件)")
 
 # --- CSV/エクセルアップロード ---
 st.sidebar.header("住所データ管理")
@@ -42,13 +110,17 @@ if uploaded_file:
 
 # --- 現在のデータ表示 ---
 with st.sidebar.expander("現在のCSVデータを確認"):
-    st.dataframe(st.session_state.df)
+    st.dataframe(display_df)
 
 # --- 検索機能 ---
+st.title("ポスティングエリア世帯数計算ツール")
+st.subheader("エリア検索")
+
 search_town = st.text_input('町名を入力してください（部分一致でOK）:')
 
 if search_town:
-    filtered_df = st.session_state.df[st.session_state.df['住所（スプレッドシート用）'].str.contains(search_town, na=False)]
+    # フィルタリングされたデータから検索
+    filtered_df = display_df[display_df['住所（スプレッドシート用）'].str.contains(search_town, na=False)]
     filtered_df = filtered_df.dropna(subset=['Latitude', 'Longitude'])
 
     if filtered_df.empty:
@@ -56,6 +128,9 @@ if search_town:
     else:
         selected_town = st.selectbox('町名を選択してください:', filtered_df['住所（スプレッドシート用）'])
         radius_km = st.number_input('半径をkmで入力してください', min_value=0.5, max_value=10.0, step=0.5, value=3.0)
+        
+        # 単価情報の入力欄を追加
+        unit_price = st.number_input('ポスティング単価（円/世帯）:', min_value=1, value=10)
 
         selected_row = filtered_df[filtered_df['住所（スプレッドシート用）'] == selected_town].iloc[0]
         map_center = [selected_row['Latitude'], selected_row['Longitude']]
@@ -63,20 +138,34 @@ if search_town:
         # 地図作成
         m = folium.Map(location=map_center, zoom_start=14)
         folium.Circle(location=map_center, radius=radius_km * 1000, color='blue', fill=True, fill_opacity=0.1).add_to(m)
+        
+        # 中心点マーカー（選択した地点）
+        folium.Marker(
+            map_center,
+            popup=f"<b>{selected_town}</b>",
+            icon=folium.Icon(color='red', icon='star')
+        ).add_to(m)
 
         # 範囲内マーカー追加
         download_df = pd.DataFrame(columns=st.session_state.df.columns)
         for idx, row in st.session_state.df.iterrows():
-            distance = geodesic((selected_row['Latitude'], selected_row['Longitude']), (row['Latitude'], row['Longitude'])).km
-            if distance <= radius_km:
-                folium.Marker([row['Latitude'], row['Longitude']],
+            if pd.notna(row['Latitude']) and pd.notna(row['Longitude']):
+                distance = geodesic((selected_row['Latitude'], selected_row['Longitude']), (row['Latitude'], row['Longitude'])).km
+                if distance <= radius_km:
+                    folium.Marker([row['Latitude'], row['Longitude']],
                               popup=f"{row['住所（スプレッドシート用）']}:{row['世帯数']}世帯",
                               icon=folium.Icon(color='green', icon='home')).add_to(m)
-                download_df = pd.concat([download_df, row.to_frame().T], ignore_index=True)
+                    download_df = pd.concat([download_df, row.to_frame().T], ignore_index=True)
 
-        # 合計世帯数表示
+        # 合計世帯数と売上予測を表示
         total_households = download_df['世帯数'].sum()
-        st.success(f'🟢 選択した範囲（半径{radius_km}km）内の合計世帯数: {total_households:,}世帯')
+        estimated_sales = total_households * unit_price
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.success(f'🏘️ 選択した範囲（半径{radius_km}km）内の合計世帯数: {total_households:,}世帯')
+        with col2:
+            st.info(f'💰 予想売上: {estimated_sales:,}円（{unit_price}円/世帯）')
 
         st_folium(m, width=700, height=500)
 
@@ -118,11 +207,41 @@ if search_town:
         csv_data = csv_buffer.getvalue().encode('utf-8')
         file_name = f"範囲内住所データ_{selected_town}.csv"
 
-        st.download_button(
-            '📥 範囲内住所データをCSVでダウンロード',
-            csv_data,
-            file_name,
-            'text/csv'
-        )
+        # エクスポートボタンのコンテナ
+        export_col1, export_col2 = st.columns(2)
+        with export_col1:
+            st.download_button(
+                '📥 範囲内住所データをCSVでダウンロード',
+                csv_data,
+                file_name,
+                'text/csv'
+            )
+        
+        # エクセルダウンロード機能も追加
+        with export_col2:
+            try:
+                buffer = io.BytesIO()
+                with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                    download_df.to_excel(writer, index=False, sheet_name='住所データ')
+                    # サマリーシートを追加
+                    summary_data = pd.DataFrame({
+                        '項目': ['検索町名', '半径', '総世帯数', 'ポスティング単価', '予想売上'],
+                        '値': [selected_town, f'{radius_km}km', f'{total_households:,}世帯', f'{unit_price}円/世帯', f'{estimated_sales:,}円']
+                    })
+                    summary_data.to_excel(writer, index=False, sheet_name='サマリー')
+                
+                excel_data = buffer.getvalue()
+                st.download_button(
+                    '📊 範囲内住所データをExcelでダウンロード',
+                    excel_data,
+                    f"範囲内住所データ_{selected_town}_{radius_km}km.xlsx",
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+            except Exception as e:
+                st.error(f"Excelファイル作成に失敗しました: {e}")
 else:
     st.warning('町名を入力して検索してください（部分的でもOK）')
+
+# フッター情報
+st.markdown("---")
+st.markdown("**ポスティングエリア世帯数計算ツール** - 加古川市・姫路市・神戸市・西宮市・高砂市・明石市対応")
