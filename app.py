@@ -14,9 +14,8 @@ from selenium.webdriver.chrome.options import Options
 # --- Cloud or local 判定 ---
 IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "1"
 
-# --- ドライバ自動インストール（Cloud & ローカル） ---
+# --- ドライバ自動インストール（Cloud & ローカル共通） ---
 chromedriver_autoinstaller.install()
-
 
 # --- 初期データ読込み ---
 if 'df' not in st.session_state:
@@ -114,7 +113,7 @@ if search_town:
             except Exception as e:
                 st.error(f"地図のスクリーンショット取得に失敗しました: {e}")
 
-        # CSVダウンロード（町名入りファイル名にする）
+        # --- CSVダウンロード（町名入りファイル名にする） ---
         csv_buffer = io.StringIO()
         download_df.to_csv(csv_buffer, index=False)
         csv_data = csv_buffer.getvalue().encode('utf-8')
