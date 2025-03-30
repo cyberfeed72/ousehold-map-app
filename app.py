@@ -14,9 +14,9 @@ from selenium.webdriver.chrome.options import Options
 # --- Cloud or local 判定 ---
 IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "1"
 
-# --- ドライバ自動インストール（ローカル用） ---
-if not IS_CLOUD:
-    chromedriver_autoinstaller.install()
+# --- ドライバ自動インストール（Cloud & ローカル） ---
+chromedriver_autoinstaller.install()
+
 
 # --- 初期データ読込み ---
 if 'df' not in st.session_state:
