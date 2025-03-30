@@ -1,14 +1,22 @@
-import streamlit as st
-import pandas as pd
+import os
+import time
 import io
 import chardet
-import os
-from streamlit_folium import st_folium
-from geopy.distance import geodesic
+import streamlit as st
+import pandas as pd
 import folium
+from geopy.distance import geodesic
+from streamlit_folium import st_folium
+import chromedriver_autoinstaller
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
-# Cloud or local 判定
+# --- Cloud or local 判定 ---
 IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "1"
+
+# --- ドライバ自動インストール（ローカル用） ---
+if not IS_CLOUD:
+    chromedriver_autoinstaller.install()
 
 # --- 初期データ読込み ---
 if 'df' not in st.session_state:
@@ -77,34 +85,34 @@ if search_town:
 
         st_folium(m, width=700, height=500)
 
-        # Web or ローカル分岐
+        # --- スクリーンショット保存（ローカルのみ） ---
         if IS_CLOUD:
             st.info("🛑 Web公開版では地図画像の自動保存機能は無効になっています。")
         else:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.service import Service
-            from selenium.webdriver.chrome.options import Options
-            import time
+            try:
+                map_file = os.path.abspath('temp_map.html')
+                m.save(map_file)
 
-            map_file = os.path.abspath('temp_map.html')
-            m.save(map_file)
+                options = Options()
+                options.add_argument('--headless')
+                options.add_argument('--no-sandbox')
+                options.add_argument('--disable-dev-shm-usage')
+                options.add_argument('--disable-gpu')
+                options.add_argument('--window-size=1920,1080')
 
-            options = Options()
-            options.add_argument('--headless')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
+                driver = webdriver.Chrome(options=options)
+                driver.get(f'file://{map_file}')
+                time.sleep(5)
 
-            service = Service(executable_path='/usr/bin/chromedriver')
-            driver = webdriver.Chrome(service=service, options=options)
-            driver.get(f'file://{map_file}')
-            time.sleep(5)
+                screenshot_file = os.path.abspath('map_image.png')
+                driver.save_screenshot(screenshot_file)
+                driver.quit()
 
-            screenshot_file = os.path.abspath('map_image.png')
-            driver.save_screenshot(screenshot_file)
-            driver.quit()
+                with open(screenshot_file, 'rb') as f:
+                    st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
 
-            with open(screenshot_file, 'rb') as f:
-                st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
+            except Exception as e:
+                st.error(f"地図のスクリーンショット取得に失敗しました: {e}")
 
         # CSVダウンロード（町名入りファイル名にする）
         csv_buffer = io.StringIO()
