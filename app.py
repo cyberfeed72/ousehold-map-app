@@ -115,8 +115,8 @@ if search_town:
         selected_town = st.selectbox('町名を選択してください:', filtered_df['住所（スプレッドシート用）'])
         radius_km = st.number_input('半径をkmで入力してください', min_value=0.5, max_value=10.0, step=0.5, value=3.0)
         
-        # 単価情報の入力欄を追加
-        unit_price = st.number_input('ポスティング単価（円/世帯）:', min_value=1, value=10)
+        # 単価情報の入力欄を追加（最小値を0.1に変更）
+        unit_price = st.number_input('ポスティング単価（円/世帯）:', min_value=0.1, value=10.0, step=0.1)
 
         selected_row = filtered_df[filtered_df['住所（スプレッドシート用）'] == selected_town].iloc[0]
         map_center = [selected_row['Latitude'], selected_row['Longitude']]
@@ -143,7 +143,7 @@ if search_town:
                               icon=folium.Icon(color='green', icon='home')).add_to(m)
                     download_df = pd.concat([download_df, row.to_frame().T], ignore_index=True)
 
-        # 合計世帯数と売上予測を表示
+        # 合計世帯数と売上予測を表示（「予想売上」→「算出金額」に変更）
         total_households = download_df['世帯数'].sum()
         estimated_sales = total_households * unit_price
         
@@ -151,7 +151,7 @@ if search_town:
         with col1:
             st.success(f'🏘️ 選択した範囲（半径{radius_km}km）内の合計世帯数: {total_households:,}世帯')
         with col2:
-            st.info(f'💰 予想売上: {estimated_sales:,}円（{unit_price}円/世帯）')
+            st.info(f'💰 算出金額: {estimated_sales:,}円（{unit_price}円/世帯）')
 
         st_folium(m, width=700, height=500)
 
@@ -205,7 +205,7 @@ if search_town:
                 'text/csv'
             )
         
-        # エクセルダウンロード機能も追加
+        # エクセルダウンロード機能も追加（サマリーシートの表記も変更）
         with export_col2:
             try:
                 buffer = io.BytesIO()
@@ -213,7 +213,7 @@ if search_town:
                     download_df.to_excel(writer, index=False, sheet_name='住所データ')
                     # サマリーシートを追加
                     summary_data = pd.DataFrame({
-                        '項目': ['検索町名', '半径', '総世帯数', 'ポスティング単価', '予想売上'],
+                        '項目': ['検索町名', '半径', '総世帯数', 'ポスティング単価', '算出金額'],
                         '値': [selected_town, f'{radius_km}km', f'{total_households:,}世帯', f'{unit_price}円/世帯', f'{estimated_sales:,}円']
                     })
                     summary_data.to_excel(writer, index=False, sheet_name='サマリー')
