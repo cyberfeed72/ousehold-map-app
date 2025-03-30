@@ -7,8 +7,6 @@ import pandas as pd
 import folium
 from geopy.distance import geodesic
 from streamlit_folium import st_folium
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 
 # --- Cloud or local 判定 ---
 IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "1"
@@ -21,54 +19,42 @@ if 'df' not in st.session_state:
         df2 = pd.read_csv('姫路市全域住所データ - 2024331.csv', encoding='utf-8')
         
         # 新規追加する市のデータファイル
-        df3 = pd.read_csv('神戸市住所データ.csv', encoding='utf-8')
-        df4 = pd.read_csv('明石市住所データ.csv', encoding='utf-8')
-        df5 = pd.read_csv('西宮市住所データ.csv', encoding='utf-8')
-        df6 = pd.read_csv('高砂市住所データ.csv', encoding='utf-8')
+        df_list = [df1, df2]
         
-        # すべてのデータフレームを結合
-        df = pd.concat([df1, df2, df3, df4, df5, df6], ignore_index=True)
-        
-    except FileNotFoundError as e:
-        st.warning(f"一部のデータファイルが見つかりません: {str(e)}")
-        # ファイルが見つからない場合は、見つかったファイルだけで続行
-        available_dfs = []
-        try:
-            df1 = pd.read_csv('加古川市住所データ.csv', encoding='utf-8')
-            available_dfs.append(df1)
-        except:
-            pass
-        try:
-            df2 = pd.read_csv('姫路市全域住所データ - 2024331.csv', encoding='utf-8')
-            available_dfs.append(df2)
-        except:
-            pass
         try:
             df3 = pd.read_csv('神戸市住所データ.csv', encoding='utf-8')
-            available_dfs.append(df3)
-        except:
-            pass
+            df_list.append(df3)
+        except Exception as e:
+            if not IS_CLOUD:
+                st.warning(f"神戸市データファイルの読み込みに失敗: {str(e)}")
+                
         try:
             df4 = pd.read_csv('明石市住所データ.csv', encoding='utf-8')
-            available_dfs.append(df4)
-        except:
-            pass
+            df_list.append(df4)
+        except Exception as e:
+            if not IS_CLOUD:
+                st.warning(f"明石市データファイルの読み込みに失敗: {str(e)}")
+                
         try:
             df5 = pd.read_csv('西宮市住所データ.csv', encoding='utf-8')
-            available_dfs.append(df5)
-        except:
-            pass
+            df_list.append(df5)
+        except Exception as e:
+            if not IS_CLOUD:
+                st.warning(f"西宮市データファイルの読み込みに失敗: {str(e)}")
+                
         try:
             df6 = pd.read_csv('高砂市住所データ.csv', encoding='utf-8')
-            available_dfs.append(df6)
-        except:
-            pass
+            df_list.append(df6)
+        except Exception as e:
+            if not IS_CLOUD:
+                st.warning(f"高砂市データファイルの読み込みに失敗: {str(e)}")
         
-        if available_dfs:
-            df = pd.concat(available_dfs, ignore_index=True)
-        else:
-            st.error("データファイルが読み込めませんでした。")
-            df = pd.DataFrame(columns=['住所（スプレッドシート用）', '世帯数', 'Latitude', 'Longitude'])
+        # すべてのデータフレームを結合
+        df = pd.concat(df_list, ignore_index=True)
+        
+    except Exception as e:
+        st.error(f"データの読み込みに失敗しました: {str(e)}")
+        df = pd.DataFrame(columns=['住所（スプレッドシート用）', '世帯数', 'Latitude', 'Longitude'])
     
     df['世帯数'] = pd.to_numeric(df['世帯数'].astype(str).str.replace(',', '', regex=False), errors='coerce').fillna(0).astype(int)
     st.session_state.df = df
@@ -170,13 +156,13 @@ if search_town:
         st_folium(m, width=700, height=500)
 
         # --- スクリーンショット保存（ローカルのみ） ---
-        if IS_CLOUD:
-            st.info("🛑 Web公開版では地図画像の自動保存機能は無効になっています。")
-        else:
+        if not IS_CLOUD:
             try:
                 import chromedriver_autoinstaller
+                from selenium import webdriver
+                from selenium.webdriver.chrome.options import Options
+                
                 chromedriver_autoinstaller.install()
-
                 map_file = os.path.abspath('temp_map.html')
                 m.save(map_file)
 
@@ -200,6 +186,8 @@ if search_town:
 
             except Exception as e:
                 st.error(f"地図のスクリーンショット取得に失敗しました（ローカル環境専用機能）: {e}")
+        else:
+            st.info("🛑 Web公開版では地図画像の自動保存機能は利用できません。")
 
         # --- CSVダウンロード（町名入りファイル名にする） ---
         csv_buffer = io.StringIO()
