@@ -1,8 +1,9 @@
 streamlit
+streamlit-folium
+selenium==4.30.0
+chromedriver-autoinstaller
+folium
+geopy
 pandas
 openpyxl
 chardet
-selenium
-streamlit-folium
-geopy
-webdriver-manager
