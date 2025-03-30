@@ -7,15 +7,11 @@ import pandas as pd
 import folium
 from geopy.distance import geodesic
 from streamlit_folium import st_folium
-import chromedriver_autoinstaller
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 # --- Cloud or local 判定 ---
 IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "1"
-
-# --- ドライバ自動インストール（Cloud & ローカル共通） ---
-chromedriver_autoinstaller.install()
 
 # --- 初期データ読込み ---
 if 'df' not in st.session_state:
@@ -89,6 +85,9 @@ if search_town:
             st.info("🛑 Web公開版では地図画像の自動保存機能は無効になっています。")
         else:
             try:
+                import chromedriver_autoinstaller
+                chromedriver_autoinstaller.install()
+
                 map_file = os.path.abspath('temp_map.html')
                 m.save(map_file)
 
@@ -111,7 +110,7 @@ if search_town:
                     st.download_button('🗺️ 地図画像をダウンロード', f, 'map_image.png', 'image/png')
 
             except Exception as e:
-                st.error(f"地図のスクリーンショット取得に失敗しました: {e}")
+                st.error(f"地図のスクリーンショット取得に失敗しました（ローカル環境専用機能）: {e}")
 
         # --- CSVダウンロード（町名入りファイル名にする） ---
         csv_buffer = io.StringIO()
