@@ -473,6 +473,7 @@ with tab2:
     
     # 選択された町名の合計世帯数を計算
     if st.session_state.selected_towns:
+        # ここで選択した町名のデータだけを取得
         selected_towns_df = display_df[display_df['住所（スプレッドシート用）'].isin(st.session_state.selected_towns)]
         total_households_checkbox = selected_towns_df['世帯数'].sum()
         estimated_sales_checkbox = total_households_checkbox * unit_price_checkbox
@@ -489,8 +490,9 @@ with tab2:
         
         if show_map:
             with map_container:
-                # 地図の中心を計算（選択したすべての町の平均位置）
+                # 選択した町名のデータだけをフィルタリング
                 valid_coords = selected_towns_df.dropna(subset=['Latitude', 'Longitude'])
+                
                 if not valid_coords.empty:
                     center_lat = valid_coords['Latitude'].mean()
                     center_lon = valid_coords['Longitude'].mean()
@@ -498,7 +500,7 @@ with tab2:
                     # 地図作成
                     m_selected = folium.Map(location=[center_lat, center_lon], zoom_start=13)
                     
-                    # 選択された町のマーカーを追加
+                    # 選択された町のマーカーを追加 - 選択した町名だけを表示
                     for idx, row in valid_coords.iterrows():
                         folium.Marker(
                             [row['Latitude'], row['Longitude']],
@@ -516,7 +518,8 @@ with tab2:
                         ).add_to(m_selected)
                     
                     # 地図表示 - キーを追加して更新を強制
-                    map_key = f"map_{len(st.session_state.selected_towns)}"
+                    # 選択された町名のハッシュ値を組み合わせた一意のキーを生成
+                    map_key = f"map_{len(st.session_state.selected_towns)}_{sum([hash(town) for town in st.session_state.selected_towns]) % 1000000}"
                     st_folium(m_selected, width=700, height=500, key=map_key)
                     
                     # スクリーンショット（ローカルのみ）
