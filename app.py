@@ -148,7 +148,7 @@ with tab1:
             radius_km = st.number_input('半径をkmで入力してください', min_value=0.5, max_value=10.0, step=0.5, value=3.0)
             
             # 単価情報の入力欄を追加（最小値を0.1に変更）
-            unit_price = st.number_input('ポスティング単価（円/世帯）:', min_value=0.1, value=10.0, step=0.1, key="circle_price")
+            unit_price = st.number_input('ポスティング単価（円/世帯）:', min_value=0.1, value=5.0, step=0.1, key="circle_price")
 
             selected_row = filtered_df[filtered_df['住所（スプレッドシート用）'] == selected_town].iloc[0]
             map_center = [selected_row['Latitude'], selected_row['Longitude']]
@@ -469,7 +469,7 @@ with tab2:
     st.session_state.selection_changed = detect_selection_change()
     
     # 単価情報の入力欄
-    unit_price_checkbox = st.number_input('ポスティング単価（円/世帯）:', min_value=0.1, value=10.0, step=0.1, key="checkbox_price")
+    unit_price_checkbox = st.number_input('ポスティング単価（円/世帯）:', min_value=0.1, value=5.0, step=0.1, key="checkbox_price")
     
     # 選択された町名の合計世帯数を計算
     if st.session_state.selected_towns:
