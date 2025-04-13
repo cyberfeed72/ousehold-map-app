@@ -242,7 +242,7 @@ with tab2:
     # 検索フィルター
     search_filter = st.text_input('検索フィルター（町名の一部を入力）:', key="checkbox_filter")
     
-    # 方向フィルター（オプション）
+    # 方向フィルター（オプション）の改良版 - 複数選択可能に
     st.write("方向フィルター（オプション）")
     direction_col1, direction_col2 = st.columns(2)
     
@@ -259,8 +259,48 @@ with tab2:
                 st.warning('該当する基準点が見つかりません。')
     
     with direction_col2:
-        directions = ["すべて", "北側", "南側", "東側", "西側"]
-        selected_direction = st.selectbox("方向:", directions, key="direction_select")
+        # 複数方向選択可能に変更
+        directions = ["北側", "南側", "東側", "西側"]
+        selected_directions = []
+        
+        # 水平方向
+        horizontal_col1, horizontal_col2 = st.columns(2)
+        with horizontal_col1:
+            if st.checkbox("東側", key="east_direction"):
+                selected_directions.append("東側")
+        with horizontal_col2:
+            if st.checkbox("西側", key="west_direction"):
+                selected_directions.append("西側")
+        
+        # 垂直方向
+        vertical_col1, vertical_col2 = st.columns(2)
+        with vertical_col1:
+            if st.checkbox("北側", key="north_direction"):
+                selected_directions.append("北側")
+        with vertical_col2:
+            if st.checkbox("南側", key="south_direction"):
+                selected_directions.append("南側")
+    
+    # 都市の選択状態と対応する一括選択ボタン
+    if selected_city != "すべての市":
+        st.write(f"{selected_city}の町名を一括操作:")
+        city_select_col1, city_select_col2 = st.columns(2)
+        with city_select_col1:
+            if st.button(f'{selected_city}の全町名を選択', key="select_city_all"):
+                # 該当する市の全町名をセッション状態に保存
+                city_towns = display_df[display_df['住所（スプレッドシート用）'].str.contains(selected_city, na=False)]['住所（スプレッドシート用）'].unique().tolist()
+                if 'selected_towns' not in st.session_state:
+                    st.session_state.selected_towns = []
+                st.session_state.selected_towns = list(set(st.session_state.selected_towns + city_towns))
+                st.experimental_rerun()
+        
+        with city_select_col2:
+            if st.button(f'{selected_city}の全町名を解除', key="deselect_city_all"):
+                # 該当する市の全町名をセッション状態から削除
+                if 'selected_towns' in st.session_state:
+                    city_towns = display_df[display_df['住所（スプレッドシート用）'].str.contains(selected_city, na=False)]['住所（スプレッドシート用）'].unique().tolist()
+                    st.session_state.selected_towns = [town for town in st.session_state.selected_towns if town not in city_towns]
+                    st.experimental_rerun()
     
     # 町名リストの作成（検索フィルターを適用）
     filtered_towns_df = display_df.copy()
@@ -269,8 +309,8 @@ with tab2:
     if search_filter:
         filtered_towns_df = filtered_towns_df[filtered_towns_df['住所（スプレッドシート用）'].str.contains(search_filter, na=False)]
     
-    # 方向フィルターを適用（基準点が選択されている場合）
-    if base_point and selected_direction != "すべて":
+    # 方向フィルターを適用（基準点が選択されていて、方向も選択されている場合）
+    if base_point and selected_directions:
         # 基準点の座標を取得
         base_point_row = display_df[display_df['住所（スプレッドシート用）'] == base_point].iloc[0]
         base_latitude = base_point_row['Latitude']
@@ -286,11 +326,17 @@ with tab2:
                 is_east = row['Longitude'] > base_longitude
                 is_west = row['Longitude'] < base_longitude
                 
-                # 選択された方向に基づいてフィルタリング
-                if (selected_direction == "北側" and is_north) or \
-                   (selected_direction == "南側" and is_south) or \
-                   (selected_direction == "東側" and is_east) or \
-                   (selected_direction == "西側" and is_west):
+                # 選択された方向のいずれかに当てはまればOK（OR条件）
+                matches_direction = False
+                for direction in selected_directions:
+                    if (direction == "北側" and is_north) or \
+                       (direction == "南側" and is_south) or \
+                       (direction == "東側" and is_east) or \
+                       (direction == "西側" and is_west):
+                        matches_direction = True
+                        break
+                
+                if matches_direction:
                     direction_filtered_indices.append(idx)
         
         # フィルタリングを適用
@@ -304,16 +350,40 @@ with tab2:
         st.session_state.selected_towns = []
     
     # 「すべて選択」と「すべて解除」ボタン
-    select_col1, select_col2 = st.columns(2)
+    select_col1, select_col2, select_col3 = st.columns(3)
     with select_col1:
-        if st.button('すべて選択', key="select_all"):
-            st.session_state.selected_towns = unique_towns.copy()
+        if st.button('現在の表示をすべて選択', key="select_all"):
+            for town in unique_towns:
+                if town not in st.session_state.selected_towns:
+                    st.session_state.selected_towns.append(town)
+            st.experimental_rerun()
+    
     with select_col2:
-        if st.button('すべて解除', key="deselect_all"):
+        if st.button('現在の表示をすべて解除', key="deselect_all"):
+            st.session_state.selected_towns = [town for town in st.session_state.selected_towns if town not in unique_towns]
+            st.experimental_rerun()
+    
+    with select_col3:
+        if st.button('選択を全解除', key="clear_all"):
             st.session_state.selected_towns = []
+            st.experimental_rerun()
+    
+    # 方向フィルターが適用されている場合の表示
+    if base_point and selected_directions:
+        direction_text = "・".join(selected_directions)
+        st.success(f"基準点「{base_point}」の {direction_text} の町名を表示しています（{len(unique_towns)}件）")
     
     # チェックボックスでの町名選択
     st.write(f"町名を選択（{len(unique_towns)}件）:")
+    
+    # 反転選択オプション - 現在表示されている町名の選択状態を一括反転
+    if st.button('表示中の選択を反転', key="invert_selection"):
+        for town in unique_towns:
+            if town in st.session_state.selected_towns:
+                st.session_state.selected_towns.remove(town)
+            else:
+                st.session_state.selected_towns.append(town)
+        st.experimental_rerun()
     
     # 町名リストが多い場合にスクロール可能なコンテナに
     town_container = st.container()
@@ -444,7 +514,7 @@ with tab2:
         csv_data = csv_buffer.getvalue().encode('utf-8')
         
         # 方向情報を含めたファイル名
-        direction_str = f"_{selected_direction}" if selected_direction != "すべて" else ""
+        direction_str = f"_{'-'.join(selected_directions)}" if selected_directions else ""
         file_prefix = base_point.replace("/", "／") if base_point else "選択地域"
         file_name = f"{file_prefix}{direction_str}_住所データ.csv"
         
@@ -470,7 +540,7 @@ with tab2:
                     town_list_df.to_excel(writer, index=False, sheet_name='選択町名リスト')
                     
                     # サマリーシート
-                    direction_info = f"{selected_direction}の町名" if selected_direction != "すべて" else "選択された町名"
+                    direction_info = f"{'-'.join(selected_directions)}の町名" if selected_directions else "選択された町名"
                     base_info = f"基準点: {base_point}" if base_point else "基準点なし"
                     
                     summary_data = pd.DataFrame({
