@@ -11,6 +11,33 @@ from streamlit_folium import st_folium
 # --- Cloud or local 判定 ---
 IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "1"
 
+# --- セッション状態の初期化 ---
+if 'selected_towns' not in st.session_state:
+    st.session_state.selected_towns = []
+
+if 'last_selection_count' not in st.session_state:
+    st.session_state.last_selection_count = 0
+
+if 'selection_changed' not in st.session_state:
+    st.session_state.selection_changed = False
+
+# 選択変更の検知関数
+def detect_selection_change():
+    current_count = len(st.session_state.selected_towns)
+    if current_count != st.session_state.last_selection_count:
+        st.session_state.selection_changed = True
+        st.session_state.last_selection_count = current_count
+    return st.session_state.selection_changed
+
+# 選択状態を更新する関数
+def update_selection(town, is_selected):
+    if is_selected and town not in st.session_state.selected_towns:
+        st.session_state.selected_towns.append(town)
+        st.session_state.selection_changed = True
+    elif not is_selected and town in st.session_state.selected_towns:
+        st.session_state.selected_towns.remove(town)
+        st.session_state.selection_changed = True
+
 # --- 初期データ読込み ---
 if 'df' not in st.session_state:
     try:
@@ -292,7 +319,8 @@ with tab2:
                 if 'selected_towns' not in st.session_state:
                     st.session_state.selected_towns = []
                 st.session_state.selected_towns = list(set(st.session_state.selected_towns + city_towns))
-                st.experimental_rerun()
+                st.session_state.selection_changed = True
+                st.success(f"{len(city_towns)}件の{selected_city}の町名を選択しました")
         
         with city_select_col2:
             if st.button(f'{selected_city}の全町名を解除', key="deselect_city_all"):
@@ -300,7 +328,8 @@ with tab2:
                 if 'selected_towns' in st.session_state:
                     city_towns = display_df[display_df['住所（スプレッドシート用）'].str.contains(selected_city, na=False)]['住所（スプレッドシート用）'].unique().tolist()
                     st.session_state.selected_towns = [town for town in st.session_state.selected_towns if town not in city_towns]
-                    st.experimental_rerun()
+                    st.session_state.selection_changed = True
+                    st.success(f"{selected_city}の町名の選択を解除しました")
     
     # 町名リストの作成（検索フィルターを適用）
     filtered_towns_df = display_df.copy()
@@ -345,10 +374,6 @@ with tab2:
     # 町名のリストを取得（重複排除、ソート）
     unique_towns = sorted(filtered_towns_df['住所（スプレッドシート用）'].unique())
     
-    # セッション状態の初期化
-    if 'selected_towns' not in st.session_state:
-        st.session_state.selected_towns = []
-    
     # 「すべて選択」と「すべて解除」ボタン
     select_col1, select_col2, select_col3 = st.columns(3)
     with select_col1:
@@ -356,17 +381,20 @@ with tab2:
             for town in unique_towns:
                 if town not in st.session_state.selected_towns:
                     st.session_state.selected_towns.append(town)
-            st.experimental_rerun()
+            st.session_state.selection_changed = True
+            st.success(f"{len(unique_towns)}件の町名を選択しました")
     
     with select_col2:
         if st.button('現在の表示をすべて解除', key="deselect_all"):
             st.session_state.selected_towns = [town for town in st.session_state.selected_towns if town not in unique_towns]
-            st.experimental_rerun()
+            st.session_state.selection_changed = True
+            st.success("表示中の町名の選択を解除しました")
     
     with select_col3:
         if st.button('選択を全解除', key="clear_all"):
             st.session_state.selected_towns = []
-            st.experimental_rerun()
+            st.session_state.selection_changed = True
+            st.success("すべての選択を解除しました")
     
     # 方向フィルターが適用されている場合の表示
     if base_point and selected_directions:
@@ -378,15 +406,24 @@ with tab2:
     
     # 反転選択オプション - 現在表示されている町名の選択状態を一括反転
     if st.button('表示中の選択を反転', key="invert_selection"):
+        new_selections = []
+        for town in st.session_state.selected_towns:
+            if town not in unique_towns:  # 現在表示されていない選択済みの町名は保持
+                new_selections.append(town)
+        
         for town in unique_towns:
-            if town in st.session_state.selected_towns:
-                st.session_state.selected_towns.remove(town)
-            else:
-                st.session_state.selected_towns.append(town)
-        st.experimental_rerun()
+            if town not in st.session_state.selected_towns:  # 現在表示されていて未選択の町名を追加
+                new_selections.append(town)
+        
+        st.session_state.selected_towns = new_selections
+        st.session_state.selection_changed = True
+        st.success("表示中の町名の選択状態を反転しました")
     
     # 町名リストが多い場合にスクロール可能なコンテナに
     town_container = st.container()
+    
+    # 選択状態を表示するための辞書を作成
+    selection_state = {}
     
     # スクロール可能なコンテナにする
     with town_container:
@@ -422,11 +459,14 @@ with tab2:
                         key=f"town_{town}"
                     )
                     
+                    # 選択状態を記録
+                    selection_state[town] = is_checked
+                    
                     # セッション状態を更新
-                    if is_checked and town not in st.session_state.selected_towns:
-                        st.session_state.selected_towns.append(town)
-                    elif not is_checked and town in st.session_state.selected_towns:
-                        st.session_state.selected_towns.remove(town)
+                    update_selection(town, is_checked)
+    
+    # 更新された選択状態を反映
+    st.session_state.selection_changed = detect_selection_change()
     
     # 単価情報の入力欄
     unit_price_checkbox = st.number_input('ポスティング単価（円/世帯）:', min_value=0.1, value=10.0, step=0.1, key="checkbox_price")
@@ -438,77 +478,84 @@ with tab2:
         estimated_sales_checkbox = total_households_checkbox * unit_price_checkbox
         
         # 結果表示
-        st.success(f'🏘️ 選択した町名（{len(st.session_state.selected_towns)}件）の合計世帯数: {total_households_checkbox:,}世帯')
-        st.info(f'💰 算出金額: {estimated_sales_checkbox:,}円（{unit_price_checkbox}円/世帯）')
+        result_container = st.container()
+        with result_container:
+            st.success(f'🏘️ 選択した町名（{len(st.session_state.selected_towns)}件）の合計世帯数: {total_households_checkbox:,}世帯')
+            st.info(f'💰 算出金額: {estimated_sales_checkbox:,}円（{unit_price_checkbox}円/世帯）')
         
-        # 選択した町名を地図に表示
-        if st.checkbox('選択した町名を地図に表示', value=True):
-            # 地図の中心を計算（選択したすべての町の平均位置）
-            valid_coords = selected_towns_df.dropna(subset=['Latitude', 'Longitude'])
-            if not valid_coords.empty:
-                center_lat = valid_coords['Latitude'].mean()
-                center_lon = valid_coords['Longitude'].mean()
-                
-                # 地図作成
-                m_selected = folium.Map(location=[center_lat, center_lon], zoom_start=13)
-                
-                # 選択された町のマーカーを追加
-                for idx, row in valid_coords.iterrows():
-                    folium.Marker(
-                        [row['Latitude'], row['Longitude']],
-                        popup=f"{row['住所（スプレッドシート用）']}:{row['世帯数']}世帯",
-                        icon=folium.Icon(color='blue', icon='home')
-                    ).add_to(m_selected)
-                
-                # 基準点がある場合は特別なマーカーを追加
-                if base_point:
-                    base_point_row = display_df[display_df['住所（スプレッドシート用）'] == base_point].iloc[0]
-                    folium.Marker(
-                        [base_point_row['Latitude'], base_point_row['Longitude']],
-                        popup=f"<b>{base_point}</b> (基準点)",
-                        icon=folium.Icon(color='red', icon='star')
-                    ).add_to(m_selected)
-                
-                # 地図表示
-                st_folium(m_selected, width=700, height=500)
-                
-                # スクリーンショット（ローカルのみ）
-                if not IS_CLOUD:
-                    try:
-                        import chromedriver_autoinstaller
-                        from selenium import webdriver
-                        from selenium.webdriver.chrome.options import Options
-                        
-                        chromedriver_autoinstaller.install()
-                        map_file = os.path.abspath('temp_map_selected.html')
-                        m_selected.save(map_file)
+        # 選択した町名を地図に表示 - 常に最新の状態を反映
+        show_map = st.checkbox('選択した町名を地図に表示', value=True)
+        map_container = st.container()
+        
+        if show_map:
+            with map_container:
+                # 地図の中心を計算（選択したすべての町の平均位置）
+                valid_coords = selected_towns_df.dropna(subset=['Latitude', 'Longitude'])
+                if not valid_coords.empty:
+                    center_lat = valid_coords['Latitude'].mean()
+                    center_lon = valid_coords['Longitude'].mean()
+                    
+                    # 地図作成
+                    m_selected = folium.Map(location=[center_lat, center_lon], zoom_start=13)
+                    
+                    # 選択された町のマーカーを追加
+                    for idx, row in valid_coords.iterrows():
+                        folium.Marker(
+                            [row['Latitude'], row['Longitude']],
+                            popup=f"{row['住所（スプレッドシート用）']}:{row['世帯数']}世帯",
+                            icon=folium.Icon(color='blue', icon='home')
+                        ).add_to(m_selected)
+                    
+                    # 基準点がある場合は特別なマーカーを追加
+                    if base_point:
+                        base_point_row = display_df[display_df['住所（スプレッドシート用）'] == base_point].iloc[0]
+                        folium.Marker(
+                            [base_point_row['Latitude'], base_point_row['Longitude']],
+                            popup=f"<b>{base_point}</b> (基準点)",
+                            icon=folium.Icon(color='red', icon='star')
+                        ).add_to(m_selected)
+                    
+                    # 地図表示 - キーを追加して更新を強制
+                    map_key = f"map_{len(st.session_state.selected_towns)}"
+                    st_folium(m_selected, width=700, height=500, key=map_key)
+                    
+                    # スクリーンショット（ローカルのみ）
+                    if not IS_CLOUD:
+                        try:
+                            import chromedriver_autoinstaller
+                            from selenium import webdriver
+                            from selenium.webdriver.chrome.options import Options
+                            
+                            chromedriver_autoinstaller.install()
+                            map_file = os.path.abspath('temp_map_selected.html')
+                            m_selected.save(map_file)
 
-                        options = Options()
-                        options.add_argument('--headless')
-                        options.add_argument('--no-sandbox')
-                        options.add_argument('--disable-dev-shm-usage')
-                        options.add_argument('--disable-gpu')
-                        options.add_argument('--window-size=1920,1080')
+                            options = Options()
+                            options.add_argument('--headless')
+                            options.add_argument('--no-sandbox')
+                            options.add_argument('--disable-dev-shm-usage')
+                            options.add_argument('--disable-gpu')
+                            options.add_argument('--window-size=1920,1080')
 
-                        driver = webdriver.Chrome(options=options)
-                        driver.get(f'file://{map_file}')
-                        time.sleep(5)
+                            driver = webdriver.Chrome(options=options)
+                            driver.get(f'file://{map_file}')
+                            time.sleep(5)
 
-                        screenshot_file = os.path.abspath('map_selected_image.png')
-                        driver.save_screenshot(screenshot_file)
-                        driver.quit()
+                            screenshot_file = os.path.abspath('map_selected_image.png')
+                            driver.save_screenshot(screenshot_file)
+                            driver.quit()
 
-                        with open(screenshot_file, 'rb') as f:
-                            st.download_button('🗺️ 選択地域の地図画像をダウンロード', f, 'map_selected_image.png', 'image/png')
+                            with open(screenshot_file, 'rb') as f:
+                                st.download_button('🗺️ 選択地域の地図画像をダウンロード', f, 'map_selected_image.png', 'image/png')
 
-                    except Exception as e:
-                        st.error(f"地図のスクリーンショット取得に失敗しました（ローカル環境専用機能）: {e}")
+                        except Exception as e:
+                            st.error(f"地図のスクリーンショット取得に失敗しました（ローカル環境専用機能）: {e}")
+                    else:
+                        st.info("🛑 Web公開版では地図画像の自動保存機能は利用できません。")
                 else:
-                    st.info("🛑 Web公開版では地図画像の自動保存機能は利用できません。")
-            else:
-                st.warning('選択した町名に有効な座標データがありません。')
+                    st.warning('選択した町名に有効な座標データがありません。')
         
-        # CSVダウンロード
+        # CSVダウンロード - 選択変更があったか定期的に確認して更新
         csv_buffer = io.StringIO()
         selected_towns_df.to_csv(csv_buffer, index=False)
         csv_data = csv_buffer.getvalue().encode('utf-8')
